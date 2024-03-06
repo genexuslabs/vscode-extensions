@@ -20,7 +20,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install VS Code Extension
-        run: npm install -g vsce
+        run: |
+          npm install -g  @vscode/vsce
+          npx @vscode/vsce --version
 
       - name: Build Colang Extension
         run: vsce package
