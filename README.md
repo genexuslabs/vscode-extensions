@@ -1,6 +1,6 @@
-# VSCode Extensions Monorepo
+# VSCode Extensions
 
-Welcome to the VSCode Extensions Monorepo! This repository serves as a collection of various extensions for Visual Studio Code, all centralized within one organized monorepo structure.
+Welcome to the VSCode Extensions! This repository serves as a collection of various extensions for Visual Studio Code, all centralized within one organized monorepo structure.
 
 ## Repositories
 
