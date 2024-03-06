@@ -2,7 +2,7 @@ name: Build Status
 
 on:
   push:
-    branches: [main, define-basic-workflow]
+    branches: [main]
   pull_request:
     branches: [main]
 
