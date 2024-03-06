@@ -25,5 +25,7 @@ jobs:
           npx @vscode/vsce --version
 
       - name: Build Colang Extension
-        run: vsce package
+        run: |
+          npm install
+          vsce package
         working-directory: ./colang-lang
