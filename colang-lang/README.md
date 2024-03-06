@@ -12,6 +12,59 @@ Please note that the VScode extension currently under development is in its alph
 - Find All References
 - Shortcut to comment code
 
+## Build & Run
+
+### Prerequisites
+
+- The Visual Studio Code Extension Manager
+
+```sh
+npm install -g vsce
+```
+
+### Installation
+
+- Clone this project
+
+```sh
+git clone https://github.com/genexuslabs/vscode-extension.git
+```
+After cloning the repository, make sure to navigate to the "colang-lang" directory within the repo to continue with the next steps.
+
+- Install packages
+
+```sh
+npm install
+```
+
+- Build project
+
+```sh
+npm run build
+```
+
+### Run
+
+Press F5 in VSCode to run de project "colang-lang"
+
+### Package & Install
+
+- Package extension
+
+```sh
+vsce package
+```
+
+- Install extension
+
+```sh
+code --install-extension .\colang-lang-0.0.1.vsix
+```
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+## Additional Information
+
+This project comes with no warranties or guarantees of any kind. While we strive for accuracy and reliability, users are advised to use the software at their own risk. We disclaim any liability for any damages or losses incurred from the use or inability to use this software. Users are encouraged to review the project's documentation and contribute to its improvement through feedback and contributions.
