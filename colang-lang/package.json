@@ -1,0 +1,94 @@
+{
+    "name": "colang-lang",
+    "displayName": "Colang Lang",
+    "description": "NeMo-Guardrails Colang language",
+    "icon": "images/colang-logo.png",
+    "version": "0.0.1",
+    "publisher": "GeneXus",
+    "repository": {
+        "url": "https://github.com/genexuslabs/vscode-extension/colang-lang"
+    },
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:colang"
+    ],
+    "main": "./client/out/extension",
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Example configuration",
+            "properties": {
+                "colangServer.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "colangServer.trace.server": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server."
+                }
+            }
+        },
+        "languages": [
+            {
+                "id": "colang",
+                "aliases": [
+                    "Colang",
+                    "colang"
+                ],
+                "extensions": [
+                    ".co",
+                    ".colang"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "colang",
+                "scopeName": "source.colang",
+                "path": "./syntaxes/colang.tmLanguage.json"
+            }
+        ],
+        "colors": [
+            {
+                "id": "colang.structure.indentation",
+                "description": "Indentation of structures"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run build",
+        "build": "tsc --build ./client/tsconfig.json ./server/tsconfig.json",
+        "lint": "eslint . --ext .ts,.tsx",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "cd server && npm install && cd .. && cd client && npm install && cd ..",
+        "package": "vsce package"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.6",
+        "mocha": "^10.3.0",
+        "@types/node": "^20.11.24",
+        "@typescript-eslint/eslint-plugin": "^7.1.0",
+        "@typescript-eslint/parser": "^7.1.0",
+        "eslint": "^8.57.0",
+        "typescript": "^5.3.3",
+        "@types/vscode": "^1.75.1"
+    }
+}

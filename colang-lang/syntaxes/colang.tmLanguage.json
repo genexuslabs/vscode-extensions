@@ -1,0 +1,275 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Colang",
+	"patterns": [
+		{
+			"include": "#define"
+		},
+		{
+			"include": "#flow"
+		},
+		{
+			"include": "#if"
+		},
+		{
+			"include": "#else"
+		},
+		{
+			"include": "#when"
+		},
+		{
+			"include": "#expression"
+		},
+		{
+			"include": "#string"
+		},
+		{
+			"include": "#comment"
+		}
+	],
+	"repository": {
+		"define": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*(define)\\s+(?:(user|bot|subflow)\\s+(.+)|(flow)(?:\\s+(.+))?)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.stringtemplate"
+				},
+				"2": {
+					"name": "keyword.stringtemplate"
+				},
+				"3": {
+					"name": "entity.name.function.stringtemplate"
+				},
+				"4": {
+					"name": "keyword.stringtemplate"
+				},
+				"5": {
+					"name": "entity.name.function.stringtemplate"
+				}
+			}
+		},
+		"flow": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*(user|bot|do)\\s+(.+)",
+			"captures": {
+				"1": {
+					"name": "keyword.stringtemplate"
+				},
+				"2": {
+					"name": "entity.name.function.stringtemplate"
+				}
+			}
+		},
+		"if": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*(if\\s+(?:not\\s+)?)(.+)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.stringtemplate"
+				},
+				"2": {
+					"patterns": [
+						{
+							"include": "#variable"
+						}
+					]
+				}
+			}
+		},
+		"else": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*(else)(?:\\s+(.+))?",
+			"captures": {
+				"1": {
+					"name": "keyword.control.stringtemplate"
+				},
+				"2": {
+					"patterns": [
+						{
+							"include": "#when-definition"
+						}
+					]
+				}
+			}
+		},
+		"when": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*((?:when)\\s+.+)",
+			"captures": {
+				"1": {
+					"patterns": [
+						{
+							"include": "#when-definition"
+						}
+					]
+				}
+			}
+		},
+		"when-definition": {
+			"name": "meta.statement.stringtemplate",
+			"match": "(when)\\s+(user)\\s+(.+)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.stringtemplate"
+				},
+				"2": {
+					"name": "keyword.stringtemplate"
+				},
+				"3": {
+					"name": "entity.name.function.stringtemplate"
+				}
+			}
+		},
+		"string": {
+			"name": "string.quoted.double.stringtemplate",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"include": "#variable"
+				},
+				{
+					"include": "#jinja"
+				}
+			]
+		},
+		"variable": {
+			"name": "meta.statement.stringtemplate",
+			"match": "(\\$)([a-zA-Z][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "keyword.operator.stringtemplate"
+				},
+				"2": {
+					"name": "variable.stringtemplate"
+				}
+			}
+		},
+		"jinja": {
+			"name": "meta.statement.stringtemplate",
+			"begin": "{{",
+			"beginCaptures": {
+				"0": {
+					"name": "keyword.operator.stringtemplate"
+				}
+			},
+			"end": "}}",
+			"endCaptures": {
+				"0": {
+					"name": "keyword.operator.stringtemplate"
+				}
+			},
+			"patterns": [
+				{
+					"name": "variable.stringtemplate",
+					"match": "[a-zA-Z_]+"
+				}
+			]
+		},
+		"comment": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*#.*",
+			"captures": {
+				"0": {
+					"name": "comment.line.stringtemplate"
+				}
+			}
+		},
+		"expression": {
+			"name": "meta.statement.stringtemplate",
+			"match": "^\\s*([^=]+)\\s*=\\s*(.*)",
+			"captures": {
+				"1": {
+					"patterns": [
+						{
+							"include": "#variable"
+						}
+					]
+				},
+				"2": {
+					"patterns": [
+						{
+							"include": "#string"
+						},
+						{
+							"include": "#execute"
+						}
+					]
+				}
+			}
+		},
+		"execute": {
+			"name": "meta.statement.stringtemplate",
+			"match": "(execute)\\s+(.*)",
+			"captures": {
+				"1": {
+					"name": "keyword.stringtemplate"
+				},
+				"2": {
+					"patterns": [
+						{
+							"include": "#execute-method"
+						}
+					]
+				}
+			}
+		},
+		"execute-method": {
+			"name": "meta.statement.stringtemplate",
+			"match": "([^(]+)((\\()[^\\)]+(\\)))?",
+			"captures": {
+				"1": {
+					"name": "entity.name.function.stringtemplate"
+				},
+				"2": {
+					"patterns": [
+						{
+							"include": "#method-parameters"
+						}
+					]
+				},
+				"3": {
+					"name": "keyword.operator.stringtemplate"
+				},
+				"4": {
+					"name": "keyword.operator.stringtemplate"
+				}
+			}
+		},
+		"method-parameters": {
+			"name": "meta.statement.stringtemplate",
+			"match": "(?:\\()?([^=]+)(=)([^,\\)]+)(,)?",
+			"captures": {
+				"1": {
+					"name": "variable.language.stringtemplate"
+				},
+				"2": {
+					"name": "keyword.operator.stringtemplate"
+				},
+				"3": {
+					"patterns": [
+						{
+							"include": "#parameter-value"
+						}
+					]
+				},
+				"4": {
+					"name": "keyword.operator.stringtemplate"
+				}
+			}
+		},
+		"parameter-value": {
+			"name": "meta.statement.stringtemplate",
+			"patterns": [
+				{
+					"include": "#variable"
+				},
+				{
+					"include": "#string"
+				}
+			]
+		}
+	},
+	"scopeName": "source.colang"
+}
