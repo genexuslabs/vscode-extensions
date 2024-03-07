@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    cron:  '0 15 * * 1' # mondays at 15:00 UTC (12:00 UTC-3)
 
 jobs:
   build:
@@ -17,7 +19,7 @@ jobs:
       - name: Install NPM
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 18
 
       - name: Install VS Code Extension
         run: |
