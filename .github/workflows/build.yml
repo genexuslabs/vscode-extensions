@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    cron:  '0 15 * * 1' # mondays at 15:00 UTC (12:00 UTC-3)
+    - cron:  '0 15 * * 1' # mondays at 15:00 UTC (12:00 UTC-3)
 
 jobs:
   build:
