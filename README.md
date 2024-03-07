@@ -1,4 +1,5 @@
 # VSCode Extensions
+[![Main Build Status](https://github.com/genexuslabs/vscode-extension/actions/workflows/build.yml/badge.svg)](https://github.com/genexuslabs/vscode-extension/actions/workflows/build.yml)
 
 Welcome to the VSCode Extensions! This repository serves as a collection of various extensions for Visual Studio Code, all centralized within one organized monorepo structure.
 
