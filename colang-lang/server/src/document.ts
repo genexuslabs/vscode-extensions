@@ -2,7 +2,11 @@ import { Position, Range, Location } from 'vscode-languageserver-types';
 import { parseLine } from './parser';
 
 export type ColangEntityType = "user" | "bot" | "flow" | "subflow" | "variable";
-export type ColangDocumentLineType = "define" | "user" | "bot" | "flow" | "do" | "message" | "comment" | "if" | "else" | "when" | "variable" | "unknown";
+export type ColangEntityVariable = {
+    name: string;
+    range: Range;
+}
+export type ColangDocumentLineType = "define" | "user" | "bot" | "flow" | "do" | "message" | "comment" | "if" | "when" | "variable" | "unknown";
 export type ColangDocumentPositionData = {
     entityType?: ColangEntityType;
     entityName?: string;
@@ -136,17 +140,24 @@ export class ColangDocumentLineDo implements ColangDocumentLine {
 
 export class ColangDocumentLineMessage implements ColangDocumentLine {
     readonly lineType: ColangDocumentLineType = "message";
-    variables?: {
-        name: string,
-        range: Range
-    }[];
+    variables?: ColangEntityVariable[];
 
     getPositionData(character: number): ColangDocumentPositionData {
-        
+        const variable = this.variables?.find(v => v.range.start.character <= character && character <= v.range.end.character);
+        if (variable) {
+            return {
+                entityType: "variable",
+                entityName: variable.name
+            }
+        }
         return {};
     }
 
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
+
+        if (entityType === "variable" && this.variables) {
+            return this.variables.filter(variable => variable.name === entityName).map(variable => variable.range);
+        }
         return [];
     }
 }
@@ -161,49 +172,29 @@ export class ColangDocumentLineComment implements ColangDocumentLine {
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
         return [];
     }
-
-    // Override the toString() method
-    toString() {
-        return `!: <comment>`;
-    }
 }
 
 export class ColangDocumentLineIf implements ColangDocumentLine {
     readonly lineType: ColangDocumentLineType = "if";
-    variables: {
-        name: string,
-        range: Range
-    }[] = [];
+    variables?: ColangEntityVariable[];
 
     getPositionData(character: number): ColangDocumentPositionData {
+        const variable = this.variables?.find(v => v.range.start.character <= character && character <= v.range.end.character);
+        if (variable) {
+            return {
+                entityType: "variable",
+                entityName: variable.name
+            }
+        }
         return {};
     }
 
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
+
+        if (entityType === "variable" && this.variables) {
+            return this.variables.filter(variable => variable.name === entityName).map(variable => variable.range);
+        }
         return [];
-    }
-
-    // Override the toString() method
-    toString() {
-        return `!: <if>`;
-    }
-}
-
-export class ColangDocumentLineElse implements ColangDocumentLine {
-    readonly lineType: ColangDocumentLineType = "else";
-    when: boolean = false;
-
-    getPositionData(character: number): ColangDocumentPositionData {
-        return {};
-    }
-
-    getReferences(entityType: ColangEntityType, entityName: string): Range[] {
-        return [];
-    }
-
-    // Override the toString() method
-    toString() {
-        return `!: else ${this.when ? "when..." : ""}`;
     }
 }
 
@@ -212,6 +203,7 @@ export class ColangDocumentLineWhen implements ColangDocumentLine {
     entityType?: "user";
     entityName?: string;
     entityNameRange?: Range;
+    else: boolean = false;
 
     getPositionData(character: number): ColangDocumentPositionData {
         return {
@@ -236,25 +228,43 @@ export class ColangDocumentLineVariable implements ColangDocumentLine {
     readonly lineType: ColangDocumentLineType = "variable";
     name?: string;
     nameRange?: Range;
-    variables?: {
-        name: string,
-        range: Range
-    }[];
+    variables?: ColangEntityVariable[];
     
     getPositionData(character: number): ColangDocumentPositionData {
-        return {
-            entityType: "variable",
-            entityName: this.name
-        };
+
+        if (this.nameRange && this.nameRange.start.character <= character && character <= this.nameRange.end.character) {
+            return {
+                entityType: "variable",
+                entityName: this.name
+            }
+        }
+
+        const variable = this.variables?.find(v => v.range.start.character <= character && character <= v.range.end.character);
+        if (variable) {
+            return {
+                entityType: "variable",
+                entityName: variable.name
+            }
+        }
+
+        return {};
     }
 
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
-        return [];
-    }
+        const ranges: Range[] = [];
 
-    // Override the toString() method
-    toString() {
-        return `!: $${this.name} = ...`;
+        if (entityType === "variable") {
+
+            if (this.name === entityName && this.nameRange) {
+                ranges.push(this.nameRange);
+            }
+            
+            if (this.variables) {
+                ranges.push(...this.variables.filter(variable => variable.name === entityName).map(variable => variable.range));
+            }
+        }
+
+        return ranges;
     }
 }
 
@@ -272,10 +282,5 @@ export class ColangDocumentLineUnknown implements ColangDocumentLine {
 
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
         return [];
-    }
-
-    // Override the toString() method
-    toString() {
-        return `?: ${this.line}`;
     }
 }
