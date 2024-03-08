@@ -11,7 +11,8 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}/colang-lang"
-            ]
+            ],
+            "preLaunchTask": "build:dev"
         }
     ]
 }

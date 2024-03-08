@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build:dev",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "build:dev"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/colang-lang"
+            }
+        }
+    ]
+}

@@ -6,7 +6,7 @@
     "version": "0.0.1",
     "publisher": "GeneXus",
     "repository": {
-		"type": "github",
+        "type": "github",
         "url": "https://github.com/genexuslabs/vscode-extension/colang-lang"
     },
     "engines": {
@@ -18,7 +18,7 @@
     "activationEvents": [
         "onLanguage:colang"
     ],
-    "main": "./client/out/extension",
+    "main": "./client/dist/extension",
     "contributes": {
         "configuration": {
             "type": "object",
@@ -72,25 +72,31 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run build",
-        "build": "tsc --build ./client/tsconfig.json ./server/tsconfig.json",
-        "lint": "eslint . --ext .ts,.tsx",
-        "watch": "tsc -watch -p ./",
         "postinstall": "cd server && npm install && cd .. && cd client && npm install && cd ..",
-        "package": "vsce package"
+        "build:clean": "rimraf --glob client/dist/* server/dist/*",
+        "build:dev": "tsc --build ./client/tsconfig.json ./server/tsconfig.json --force",
+        "build:prod": "npm run build:prod:client && npm run build:prod:server",
+        "build:prod:client": "esbuild client/src/extension.ts --bundle --outdir=client/dist --external:vscode --format=cjs --platform=node --minify",
+        "build:prod:server": "esbuild server/src/server.ts --bundle --outdir=server/dist --external:vscode --format=cjs --platform=node --minify",
+        "package": "vsce package",
+        "vscode:prepublish": "npm run build:clean && npm run build:prod",
+        "lint": "eslint . --ext .ts,.tsx",
+        "watch": "tsc -watch -p ./"
     },
     "dependencies": {
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
         "@types/mocha": "^10.0.6",
-        "mocha": "^10.3.0",
-        "@types/node": "^20.11.24",
-        "typescript": "^5.3.3",
+        "@types/node": "^20.11.25",
         "@types/vscode": "^1.75.1",
-        "eslint": "^8.57.0",
         "@typescript-eslint/eslint-plugin": "^7.1.0",
         "@typescript-eslint/parser": "^7.1.0",
-        "prettier": "~3.2.5"
+        "esbuild": "^0.20.1",
+        "eslint": "^8.57.0",
+        "mocha": "^10.3.0",
+        "prettier": "~3.2.5",
+        "rimraf": "^5.0.5",
+        "typescript": "^5.3.3"
     }
 }
