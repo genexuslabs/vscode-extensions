@@ -5,18 +5,18 @@ import {
     ColangDocumentLineComment,
     ColangDocumentLineDefine,
     ColangDocumentLineDo,
-    ColangDocumentLineElse,
     ColangDocumentLineIf,
     ColangDocumentLineMessage,
     ColangDocumentLineUnknown,
     ColangDocumentLineUser,
     ColangDocumentLineVariable,
     ColangDocumentLineWhen,
-    ColangEntityType
+    ColangEntityType,
+    ColangEntityVariable
 } from './document';
 
 type LineMatcher = {
-    id: "define" | "user" | "bot" | "do" | "message" | "comment" | "if" | "else" | "when" | "variable";
+    id: "define" | "user" | "bot" | "do" | "message" | "comment" | "if" | "when" | "variable";
     regex: RegExp;
 };
 
@@ -28,10 +28,10 @@ const rules: LineMatcher[] = [
     {id: "message", regex: /^\s*"/},
     {id: "comment", regex: /^\s*#(?:\s*(.*))?/},
     {id: "if", regex: /^\s*if(?:\s+(.*))?/},
-    {id: "else", regex: /^\s*else(?:\s+(when)(?:\s+(.*))?)?/},
-    {id: "when", regex: /^\s*(?:else\s+)?when(?:\s+(user)(?:\s+(.*))?)?/},
+    {id: "when", regex: /^\s*(else\s+)?when(?:\s+(user)(?:\s+(.*))?)?/},
     {id: "variable", regex: /^\s*\$(?:([^=\s]+)(\s*=(.*)?)?)?/}
 ];
+const VARIABLE_REGEX = /\$([a-zA-Z][a-zA-Z0-9_]*)/g;
 
 export function parseLine(line: string, lineNumber: number): ColangDocumentLine {
     const { lineMatcher, matches } = matchLine(line);
@@ -51,8 +51,6 @@ export function parseLine(line: string, lineNumber: number): ColangDocumentLine 
         return parseLineComment(line, lineNumber, matches);
     case "if":
         return parseLineIf(line, lineNumber, matches);        
-    case "else":
-        return parseLineElse(line, lineNumber, matches);        
     case "when":
         return parseLineWhen(line, lineNumber, matches);        
     case "variable":
@@ -148,10 +146,10 @@ function parseLineDo(line: string, lineNumber: number,  matches: RegExpMatchArra
     return lineDo;
 }
 
-function parseLineMessage(line: string, lineNumber: number,  matches: RegExpMatchArray): ColangDocumentLineMessage {
+function parseLineMessage(line: string, lineNumber: number,  _matches: RegExpMatchArray): ColangDocumentLineMessage {
     const lineMessage = new ColangDocumentLineMessage();
 
-    // TODO: lineMessage.variables
+    lineMessage.variables = getLineVariables(line, lineNumber);
 
     return lineMessage;
 }
@@ -159,17 +157,9 @@ function parseLineMessage(line: string, lineNumber: number,  matches: RegExpMatc
 function parseLineIf(line: string, lineNumber: number,  matches: RegExpMatchArray): ColangDocumentLineIf {
     const lineIf = new ColangDocumentLineIf();
 
-    // TODO: lineIf.variables
+    lineIf.variables = getLineVariables(line, lineNumber);
 
     return lineIf;
-}
-
-function parseLineElse(line: string, lineNumber: number,  matches: RegExpMatchArray): ColangDocumentLineElse {
-    const lineElse = new ColangDocumentLineElse();
-
-    // TODO: lineElse.when
-
-    return lineElse;
 }
 
 function parseLineWhen(line: string, lineNumber: number,  matches: RegExpMatchArray): ColangDocumentLineWhen {
@@ -197,7 +187,25 @@ function parseLineVariable(line: string, lineNumber: number,  matches: RegExpMat
             Position.create(lineNumber, variableNameIndex + lineVariable.name.length)
         );    
     }
-    // TODO: lineVariable.variables
+
+    lineVariable.variables = getLineVariables(line, lineNumber)?.slice(1);
 
     return lineVariable;
+}
+
+function getLineVariables(line:string, lineNumber: number): ColangEntityVariable[] | undefined {
+    const variables: ColangEntityVariable[] = [];
+    let match;
+
+    while ((match = VARIABLE_REGEX.exec(line)) !== null) {
+        variables.push({
+            name: match[1],
+            range: Range.create(
+                Position.create(lineNumber, match.index + 1),
+                Position.create(lineNumber, match.index + 1 + match[1].length)
+            )
+        })
+    }
+
+    return variables.length === 0 ? undefined : variables;
 }
