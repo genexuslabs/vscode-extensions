@@ -165,7 +165,18 @@ function parseLineIf(line: string, lineNumber: number,  matches: RegExpMatchArra
 function parseLineWhen(line: string, lineNumber: number,  matches: RegExpMatchArray): ColangDocumentLineWhen {
     const lineWhen = new ColangDocumentLineWhen();
 
-    // TODO:
+    lineWhen.else = matches[1] === "else";
+    lineWhen.entityType = matches[2] as "user";
+    lineWhen.entityName = matches[3];
+
+    if (lineWhen.entityName) {
+        const entityNameIndex = line.lastIndexOf(lineWhen.entityName);
+
+        lineWhen.entityNameRange = Range.create(
+            Position.create(lineNumber, entityNameIndex),
+            Position.create(lineNumber, entityNameIndex + lineWhen.entityName.length)
+        );    
+    }
 
     return lineWhen;
 }

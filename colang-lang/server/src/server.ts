@@ -19,7 +19,11 @@ import {
 	type DocumentDiagnosticReport,
 	DefinitionParams,
 	Location,
-	ReferenceParams
+	ReferenceParams,
+	RenameParams,
+	WorkspaceEdit,
+	DocumentSymbol,
+	Range
 } from 'vscode-languageserver/node';
 
 import {
@@ -66,6 +70,12 @@ connection.onInitialize((params: InitializeParams) => {
 			definitionProvider: true,
 			// Tell the client that this server supports go to references.
 			referencesProvider: true,
+			// Tell the client that this server supports outliner.
+			documentSymbolProvider: true,
+			// Tell the client that this server supports rename symbol.
+			renameProvider: {
+				prepareProvider: true
+			},
 			diagnosticProvider: {
 				interFileDependencies: false,
 				workspaceDiagnostics: false
@@ -286,6 +296,18 @@ connection.onReferences((params: ReferenceParams): Location[] => {
 
     // No references found
     return [];
+});
+
+connection.onDocumentSymbol(async (params): Promise<DocumentSymbol[]> => {
+	return new ColangDocument(params.textDocument.uri, documents.get(params.textDocument.uri)?.getText() || "").getSymbols();
+});
+
+connection.onPrepareRename(async (params): Promise<Range | null> => {
+	return new ColangDocument(params.textDocument.uri, documents.get(params.textDocument.uri)?.getText() || "").canRenameSymbol(params.position);
+});
+
+connection.onRenameRequest(async (params: RenameParams): Promise<WorkspaceEdit | null> => {
+	return new ColangDocument(params.textDocument.uri, documents.get(params.textDocument.uri)?.getText() || "").renameSymbol(params.position, params.newName);
 });
 
 // Make the text document manager listen on the connection

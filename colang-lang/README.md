@@ -20,6 +20,10 @@ Please note that the VScode extension currently under development is in its alph
   ![1709911736341](image/README/1709911736341.png)
 - Shortcut to comment code
 
+- Outliner
+
+- Rename symbols
+
 ## Build & Run
 
 ### Prerequisites

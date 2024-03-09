@@ -1,5 +1,6 @@
 import { Position, Range, Location } from 'vscode-languageserver-types';
 import { parseLine } from './parser';
+import { DocumentSymbol, SymbolKind, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
 
 export type ColangEntityType = "user" | "bot" | "flow" | "subflow" | "variable";
 export type ColangEntityVariable = {
@@ -10,6 +11,7 @@ export type ColangDocumentLineType = "define" | "user" | "bot" | "flow" | "do" |
 export type ColangDocumentPositionData = {
     entityType?: ColangEntityType;
     entityName?: string;
+    entityNameRange?: Range;
 }
 
 
@@ -29,6 +31,53 @@ export class ColangDocument {
             return line.getPositionData(position.character);
         }
         return {};
+    }
+
+    getSymbols(): DocumentSymbol[] {
+        const symbols: DocumentSymbol[] = [];
+
+        this.lines.forEach(line => {
+            if (line.lineType === "define") {
+                const lineDefine = line as ColangDocumentLineDefine;
+    
+                if (lineDefine.entityName && lineDefine.entityNameRange) {
+                    symbols.push({
+                        name: lineDefine.entityName,
+                        detail: lineDefine.entityType,
+                        kind: SymbolKind.Method,
+                        range: lineDefine.entityNameRange,
+                        selectionRange: lineDefine.entityNameRange,
+                        children: []
+                    });
+                }
+            }
+        });
+
+        return symbols;
+    }
+
+    canRenameSymbol(position: Position): Range | null {
+        return this.getPositionData(position).entityNameRange ?? null;
+    }
+
+    renameSymbol(symbolPosition: Position, newName: string): WorkspaceEdit | null {
+        const renames: TextEdit[] = [];
+        const data = this.getPositionData(symbolPosition);
+
+        this.lines.forEach(line => {
+            if (data.entityType && data.entityName) { // put this line outside of foreach. Validator bug.
+                renames.push(...line.renameSymbol(data.entityType, data.entityName, newName));
+            }
+        });
+
+        if (renames.length > 0) {
+            return {
+                changes: {
+                    [this.uri]: renames
+                }
+            }    
+        }
+        return null;
     }
 
     getDefinition(entityType: ColangEntityType, entityName: string): Location | undefined {
@@ -59,6 +108,7 @@ export interface ColangDocumentLine {
     readonly lineType: ColangDocumentLineType;
     getPositionData(character: number): ColangDocumentPositionData;
     getReferences(entityType: ColangEntityType, entityName: string): Range[];
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[];
 }
 
 export class ColangDocumentLineDefine implements ColangDocumentLine {
@@ -70,7 +120,8 @@ export class ColangDocumentLineDefine implements ColangDocumentLine {
     getPositionData(_character: number): ColangDocumentPositionData {
         return {
             entityType: this.entityType,
-            entityName: this.entityName
+            entityName: this.entityName,
+            entityNameRange: this.entityNameRange
         };
     }
 
@@ -78,6 +129,14 @@ export class ColangDocumentLineDefine implements ColangDocumentLine {
         return this.entityType === entityType && this.entityName === entityName && this.entityNameRange ?
             [this.entityNameRange] : 
             [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+
+        if (entityType === this.entityType && entityName === entityName && this.entityNameRange) {
+            return [{newText: newName, range: this.entityNameRange}];
+        }
+        return [];
     }
 }
 
@@ -89,7 +148,8 @@ export class ColangDocumentLineUser implements ColangDocumentLine {
     getPositionData(_character: number): ColangDocumentPositionData {
         return {
             entityType: "user",
-            entityName: this.entityName
+            entityName: this.entityName,
+            entityNameRange: this.entityNameRange
         };
     }
 
@@ -97,6 +157,14 @@ export class ColangDocumentLineUser implements ColangDocumentLine {
         return entityType === "user" && this.entityName === entityName && this.entityNameRange ?
             [this.entityNameRange] : 
             [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+
+        if (entityType === "user" && entityName === entityName && this.entityNameRange) {
+            return [{newText: newName, range: this.entityNameRange}];
+        }
+        return [];
     }
 }
 
@@ -108,7 +176,8 @@ export class ColangDocumentLineBot implements ColangDocumentLine {
     getPositionData(_character: number): ColangDocumentPositionData {
         return {
             entityType: "bot",
-            entityName: this.entityName
+            entityName: this.entityName,
+            entityNameRange: this.entityNameRange
         };
     }
 
@@ -116,6 +185,14 @@ export class ColangDocumentLineBot implements ColangDocumentLine {
         return entityType === "bot" && this.entityName === entityName && this.entityNameRange ?
             [this.entityNameRange] : 
             [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+
+        if (entityType === "bot" && entityName === entityName && this.entityNameRange) {
+            return [{newText: newName, range: this.entityNameRange}];
+        }
+        return [];
     }
 }
 
@@ -127,7 +204,8 @@ export class ColangDocumentLineDo implements ColangDocumentLine {
     getPositionData(_character: number): ColangDocumentPositionData {
         return {
             entityType: "subflow",
-            entityName: this.entityName
+            entityName: this.entityName,
+            entityNameRange: this.entityNameRange
         };
     }
 
@@ -135,6 +213,14 @@ export class ColangDocumentLineDo implements ColangDocumentLine {
         return entityType === "subflow" && this.entityName === entityName && this.entityNameRange ?
             [this.entityNameRange] : 
             [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+
+        if (entityType === "subflow" && entityName === entityName && this.entityNameRange) {
+            return [{newText: newName, range: this.entityNameRange}];
+        }
+        return [];
     }
 }
 
@@ -147,7 +233,8 @@ export class ColangDocumentLineMessage implements ColangDocumentLine {
         if (variable) {
             return {
                 entityType: "variable",
-                entityName: variable.name
+                entityName: variable.name,
+                entityNameRange: variable.range
             }
         }
         return {};
@@ -159,6 +246,20 @@ export class ColangDocumentLineMessage implements ColangDocumentLine {
             return this.variables.filter(variable => variable.name === entityName).map(variable => variable.range);
         }
         return [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+        const renames: TextEdit[] = [];
+
+        if (entityType === "variable") {
+            this.variables?.forEach(variable => {
+                if (entityName === variable.name && variable.range ) {
+                    renames.push({newText: newName, range: variable.range});
+                }    
+            });    
+        }
+
+        return renames;
     }
 }
 
@@ -172,6 +273,10 @@ export class ColangDocumentLineComment implements ColangDocumentLine {
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
         return [];
     }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+        return [];
+    }
 }
 
 export class ColangDocumentLineIf implements ColangDocumentLine {
@@ -183,7 +288,8 @@ export class ColangDocumentLineIf implements ColangDocumentLine {
         if (variable) {
             return {
                 entityType: "variable",
-                entityName: variable.name
+                entityName: variable.name,
+                entityNameRange: variable.range
             }
         }
         return {};
@@ -195,6 +301,20 @@ export class ColangDocumentLineIf implements ColangDocumentLine {
             return this.variables.filter(variable => variable.name === entityName).map(variable => variable.range);
         }
         return [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+        const renames: TextEdit[] = [];
+
+        if (entityType === "variable") {
+            this.variables?.forEach(variable => {
+                if (entityName === variable.name && variable.range ) {
+                    renames.push({newText: newName, range: variable.range});
+                }    
+            });    
+        }
+
+        return renames;
     }
 }
 
@@ -208,7 +328,8 @@ export class ColangDocumentLineWhen implements ColangDocumentLine {
     getPositionData(character: number): ColangDocumentPositionData {
         return {
             entityType: this.entityType,
-            entityName: this.entityName
+            entityName: this.entityName,
+            entityNameRange: this.entityNameRange
         };
     }
 
@@ -218,9 +339,12 @@ export class ColangDocumentLineWhen implements ColangDocumentLine {
             [];
     }
 
-    // Override the toString() method
-    toString() {
-        return `!: when...`;
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+
+        if (entityType === this.entityType && entityName === entityName && this.entityNameRange) {
+            return [{newText: newName, range: this.entityNameRange}];
+        }
+        return [];
     }
 }
 
@@ -235,7 +359,8 @@ export class ColangDocumentLineVariable implements ColangDocumentLine {
         if (this.nameRange && this.nameRange.start.character <= character && character <= this.nameRange.end.character) {
             return {
                 entityType: "variable",
-                entityName: this.name
+                entityName: this.name,
+                entityNameRange: this.nameRange
             }
         }
 
@@ -243,7 +368,8 @@ export class ColangDocumentLineVariable implements ColangDocumentLine {
         if (variable) {
             return {
                 entityType: "variable",
-                entityName: variable.name
+                entityName: variable.name,
+                entityNameRange: variable.range
             }
         }
 
@@ -266,6 +392,25 @@ export class ColangDocumentLineVariable implements ColangDocumentLine {
 
         return ranges;
     }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
+        const renames: TextEdit[] = [];
+
+        if (entityType === "variable") {
+
+            if (entityName === this.name && this.nameRange) {
+                renames.push({newText: newName, range: this.nameRange});
+            }
+    
+            this.variables?.forEach(variable => {
+                if (entityName === variable.name && variable.range ) {
+                    renames.push({newText: newName, range: variable.range});
+                }    
+            });    
+        }
+
+        return renames;
+    }
 }
 
 export class ColangDocumentLineUnknown implements ColangDocumentLine {
@@ -281,6 +426,10 @@ export class ColangDocumentLineUnknown implements ColangDocumentLine {
     }
 
     getReferences(entityType: ColangEntityType, entityName: string): Range[] {
+        return [];
+    }
+
+    renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
         return [];
     }
 }
