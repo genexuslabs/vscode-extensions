@@ -4,10 +4,10 @@
     "description": "NeMo-Guardrails Colang language",
     "icon": "images/colang-logo.png",
     "version": "0.0.1",
-    "publisher": "GeneXus",
+    "publisher": "GeneXusLabs",
     "repository": {
         "type": "github",
-        "url": "https://github.com/genexuslabs/vscode-extension/colang-lang"
+        "url": "https://github.com/genexuslabs/vscode-extensions/tree/main/colang-lang"
     },
     "engines": {
         "vscode": "^1.75.0"

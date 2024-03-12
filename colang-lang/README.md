@@ -7,22 +7,16 @@ Please note that the VScode extension currently under development is in its alph
 ## Features
 
 - Syntax highlight
-
-  ![1709911684305](image/README/1709911684305.png)
 - Go to Definition
-
-  ![1709911961521](image/README/1709911961521.png)
 - Go to References
-
-  ![1709911723002](image/README/1709911723002.png)
 - Find All References
-
-  ![1709911736341](image/README/1709911736341.png)
 - Shortcut to comment code
-
 - Outliner
-
 - Rename symbols
+- Syntax checker
+  - Unused symbol
+  - Duplicate symbol
+  - Undefined symbol
 
 ## Build & Run
 

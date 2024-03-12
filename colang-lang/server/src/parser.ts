@@ -56,7 +56,7 @@ export function parseLine(line: string, lineNumber: number): ColangDocumentLine 
     case "variable":
         return parseLineVariable(line, lineNumber, matches);
     default:
-        return new ColangDocumentLineUnknown(line);
+        return parseLineUnknown(line, lineNumber, matches);
     }
 }
 
@@ -202,6 +202,10 @@ function parseLineVariable(line: string, lineNumber: number,  matches: RegExpMat
     lineVariable.variables = getLineVariables(line, lineNumber)?.slice(1);
 
     return lineVariable;
+}
+
+function parseLineUnknown(line: string, lineNumber: number,  matches: RegExpMatchArray): ColangDocumentLineComment {
+    return new ColangDocumentLineUnknown(line, lineNumber);
 }
 
 function getLineVariables(line:string, lineNumber: number): ColangEntityVariable[] | undefined {

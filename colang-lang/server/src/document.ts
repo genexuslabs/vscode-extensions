@@ -1,13 +1,14 @@
 import { Position, Range, Location } from 'vscode-languageserver-types';
 import { parseLine } from './parser';
-import { DocumentSymbol, SymbolKind, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
+import { Diagnostic, DocumentSymbol, SymbolKind, TextEdit, WorkspaceEdit } from 'vscode-languageserver/node';
+import { ColangDocumentValidator } from './validator';
 
 export type ColangEntityType = "user" | "bot" | "flow" | "subflow" | "variable";
 export type ColangEntityVariable = {
     name: string;
     range: Range;
 }
-export type ColangDocumentLineType = "define" | "user" | "bot" | "flow" | "do" | "message" | "comment" | "if" | "when" | "variable" | "unknown";
+export type ColangDocumentLineType = "define" | "user" | "bot" | "do" | "message" | "comment" | "if" | "when" | "variable" | "unknown";
 export type ColangDocumentPositionData = {
     entityType?: ColangEntityType;
     entityName?: string;
@@ -64,11 +65,11 @@ export class ColangDocument {
         const renames: TextEdit[] = [];
         const data = this.getPositionData(symbolPosition);
 
-        this.lines.forEach(line => {
-            if (data.entityType && data.entityName) { // put this line outside of foreach. Validator bug.
+        if (data.entityType && data.entityName) {
+            for (const line of this.lines) {
                 renames.push(...line.renameSymbol(data.entityType, data.entityName, newName));
             }
-        });
+        }
 
         if (renames.length > 0) {
             return {
@@ -97,6 +98,10 @@ export class ColangDocument {
         const locations: Location[] = [];
         this.lines.forEach(line => locations.push(...line.getReferences(entityType, entityName).map(range => Location.create(this.uri, range))));
         return locations;
+    }
+
+    validate(connection:any): Diagnostic[] {
+        return new ColangDocumentValidator(this).validate();
     }
 
     private parse(text: string): ColangDocumentLine[] {
@@ -133,7 +138,7 @@ export class ColangDocumentLineDefine implements ColangDocumentLine {
 
     renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
 
-        if (entityType === this.entityType && entityName === entityName && this.entityNameRange) {
+        if (entityType === this.entityType && entityName === this.entityName && this.entityNameRange) {
             return [{newText: newName, range: this.entityNameRange}];
         }
         return [];
@@ -161,7 +166,7 @@ export class ColangDocumentLineUser implements ColangDocumentLine {
 
     renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
 
-        if (entityType === "user" && entityName === entityName && this.entityNameRange) {
+        if (entityType === "user" && entityName === this.entityName && this.entityNameRange) {
             return [{newText: newName, range: this.entityNameRange}];
         }
         return [];
@@ -189,7 +194,7 @@ export class ColangDocumentLineBot implements ColangDocumentLine {
 
     renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
 
-        if (entityType === "bot" && entityName === entityName && this.entityNameRange) {
+        if (entityType === "bot" && entityName === this.entityName && this.entityNameRange) {
             return [{newText: newName, range: this.entityNameRange}];
         }
         return [];
@@ -217,7 +222,7 @@ export class ColangDocumentLineDo implements ColangDocumentLine {
 
     renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
 
-        if (entityType === "subflow" && entityName === entityName && this.entityNameRange) {
+        if (entityType === "subflow" && entityName === this.entityName && this.entityNameRange) {
             return [{newText: newName, range: this.entityNameRange}];
         }
         return [];
@@ -323,7 +328,7 @@ export class ColangDocumentLineWhen implements ColangDocumentLine {
     entityType?: "user";
     entityName?: string;
     entityNameRange?: Range;
-    else: boolean = false;
+    else?: boolean = false;
 
     getPositionData(character: number): ColangDocumentPositionData {
         return {
@@ -341,7 +346,7 @@ export class ColangDocumentLineWhen implements ColangDocumentLine {
 
     renameSymbol(entityType: ColangEntityType, entityName: string, newName: string): TextEdit[] {
 
-        if (entityType === this.entityType && entityName === entityName && this.entityNameRange) {
+        if (entityType === this.entityType && entityName === this.entityName && this.entityNameRange) {
             return [{newText: newName, range: this.entityNameRange}];
         }
         return [];
@@ -416,9 +421,15 @@ export class ColangDocumentLineVariable implements ColangDocumentLine {
 export class ColangDocumentLineUnknown implements ColangDocumentLine {
     readonly lineType: ColangDocumentLineType = "unknown";
     line: string = "";
+    lineNumber: number
+    empty: boolean = false;
+    else: boolean = false;
     
-    constructor(line: string) {
+    constructor(line: string, lineNumber: number) {
         this.line = line;
+        this.lineNumber = lineNumber;
+        this.empty = line.match(/^\s*$/) !== null;
+        this.else = line.match(/^\s*else\s*$/) !== null;
     }
 
     getPositionData(character: number): ColangDocumentPositionData {
