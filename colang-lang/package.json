@@ -3,7 +3,7 @@
     "displayName": "Colang Lang",
     "description": "NeMo-Guardrails Colang language",
     "icon": "images/colang-logo.png",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "publisher": "GeneXusLabs",
     "repository": {
         "type": "github",
