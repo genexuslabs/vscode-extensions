@@ -180,7 +180,7 @@ documents.onDidChangeContent(change => {
 async function validateTextDocument(textDocument: TextDocument): Promise<Diagnostic[]> {
 	const colangDocument = new ColangDocument(textDocument.uri, textDocument.getText());
 
-	return [];
+	return colangDocument.validate(connection);
 /*	
 	// In this simple example we get the settings for every validate run.
 	const settings = await getDocumentSettings(textDocument.uri);
